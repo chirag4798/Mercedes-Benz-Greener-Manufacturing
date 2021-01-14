@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    <h1></h1>
+<form><input type="button" value="Go Back!" onclick="history.go(-1)"></form>
+<h1></h1>
+<form action="/download" method="POST"><input type="Submit" value="Download CSV" ></form>
+<h1></h1>
+</body>
+{% for table in tables %}
+            {{ table|safe }}
+{% endfor %}
+</html>
+
+

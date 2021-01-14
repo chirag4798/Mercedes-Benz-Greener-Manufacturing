@@ -1,4 +1,4 @@
-import os, pickle, json, shutil
+import os, pickle, json, shutil, io
 import pandas as pd
 import numpy as np
 import category_encoders as ce
@@ -9,10 +9,9 @@ from sklearn.ensemble import RandomForestRegressor, StackingRegressor, GradientB
 from sklearn.linear_model import SGDRegressor, RidgeCV
 from sklearn.random_projection import GaussianRandomProjection, SparseRandomProjection
 from sklearn.decomposition import PCA, FastICA, TruncatedSVD
-from flask import Flask, render_template, request
+from flask import Flask, render_template,  session, send_file, request
 
 app = Flask(__name__)
-
 with open("config.json", "r") as f:
     config = json.load(f)
 
@@ -52,18 +51,7 @@ def preprocess_data(file_path):
     else:
         return X
 
-
-def metric_pipeline(file_path):
-    if "y" not in pd.read_csv(file_path).columns:
-        raise Exception("No target variable found to compute R2-score")
-    else:
-        X, y = preprocess_data(file_path)
-        y_pred = np.exp(PICKLE_OBJECTS["model"].predict(X))
-        score = r2_score(y, y_pred)
-        return score
-
-
-def inference_pipeline(file_path):
+def predict(file_path):
     if "y" not in pd.read_csv(file_path).columns:
         X = preprocess_data(file_path)
     else:
@@ -72,17 +60,8 @@ def inference_pipeline(file_path):
     y_pred = np.exp(PICKLE_OBJECTS["model"].predict(X))
     submission = pd.DataFrame()
     submission["ID"] = ids
-    submission["y"] = y_pred
+    submission["predicted_time (in seconds)"] = np.round(y_pred, 2)
     return submission
-
-
-def predict(file_path):
-    if "y" not in pd.read_csv(file_path).columns:
-        X = preprocess_data(file_path)
-    else:
-        X, _ = preprocess_data(file_path)
-    y_pred = np.exp(PICKLE_OBJECTS["model"].predict(X))
-    return y_pred
 
 @app.route("/")
 def main():
@@ -90,25 +69,30 @@ def main():
 
 @app.route("/predict", methods=["GET", "POST"])
 def predict_time():
+    global prediction
     if request.method == 'POST':
         # check if the post request has the file part
         if 'file' not in request.files:
-            print('No file part')
             return render_template("index.html")
         csv_file = request.files['file']
         # if user does not select file, browser also
         # submit an empty part without filename
         if csv_file.filename == '':
-            print('No selected file')
             return render_template("index.html")
         else:
-            if not os.path.exists(config["TEMPORARY_STORAGE"]):
-                os.mkdir(config["TEMPORARY_STORAGE"])
+            os.mkdir(config["TEMPORARY_STORAGE"])
             complete_file_path = os.path.join(config["TEMPORARY_STORAGE"], csv_file.filename)
             csv_file.save(complete_file_path)
-            y_pred = predict(complete_file_path)
+            prediction = predict(complete_file_path)
             shutil.rmtree(config["TEMPORARY_STORAGE"])
-            return f"Predicted Times: {y_pred}"
+            return render_template("prediction.html", tables=[prediction.to_html(classes="data", header="true")])
+
+@app.route("/download", methods=["GET", "POST"])
+def download():
+    csv = prediction.to_csv(index=False, header=True)
+    buf_str = io.StringIO(csv)
+    buf_byt = io.BytesIO(buf_str.read().encode("utf-8"))
+    return send_file(buf_byt, mimetype="text/csv", as_attachment=True, attachment_filename="predictions.csv")
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, host="0.0.0.0", port=3000)

@@ -48,11 +48,24 @@ Can you cut the time a Mercedes-Benz spends on the test bench?
 <p align="justify">The author has carefully researched existing methods of solving the problem and crafted a unique solution. The 2 way and 3 way interaction between features has been adopted from the Winner’s solution along with applying PCA for dimensionality reduction, inspired from the Runner up’s solution. The final model architecture is similar to the one discussed in the earlier section but with only the stacked model consisting of the XGBoost model, RandomForest Regressor model and a Linear Regression model. The meta classifier is a Linear Regression model with L2 regularization. The categorical features are label encoded instead of one hot encoding.
 
 
-## First Cut Approach
-- All of the features are either binary or categorical which are not ideal for Linear methods. They need to be handled appropriately by applying One-Hot Encoding or other approaches.
+## First Cut Approach & Improvements
+- All of the features are either binary or categorical which are not ideal for Linear methods. They need to be handled appropriately by applying One-Hot Encoding or other approaches along with the use of techniques like target encoding or mean encoding, since none of the other solutions implemented it.
 - The previous solutions also showed that many features are redundant or have very low variance, hence to reduce the complexity of the final models, experiment with various forms of feature selection methods like Recursive feature selection and the Feature Learner method proposed by the 2nd place Winner’s solution
 - The data also contains outliers which have to be taken care of. The key performance metric R-squared can be easily affected by the presence of outliers in train as well as test data. Experiment with simple as well as advanced methods of outlier detection.
 - Use of cross validation to find hyperparameters and for feature selection, to make the final solution more robust.
 - The correlation and interactions between features also needs a closer look. Will have to experiment to get 2-way and 3-way interactions between features and try to engineer new features from that.
 - Since this is a regression problem, this problem would make a good candidate for simple Linear Regression Models. These linear models may not perform well but can act as good base lines for other more advanced methods like tree based models, and ensemble models.</p>
+
+## Exploratory Data Analysis
+<p align="justify">The training data shown below has high dimensionality and the features are anonymized hence its not very interpretable</p>
+<p align="center"><a href="https://imgur.com/yIOYnVk"><img src="https://i.imgur.com/yIOYnVk.png" title="source: imgur.com" /></a></p>
+<p align="justify">The summary stats for the training data can be seen below. The number of categorical variables are 8 and the number of binary variables are 356 along with the 'ID' and target variable 'y'. Around 13 features have zero variance in the training data that can be ignored for the rest of the analysis.</p>    
+<p align="center"></a><a href="https://imgur.com/G9yONjd"><img src="https://i.imgur.com/G9yONjd.png" title="source: imgur.com" /></a></p>
+<p align="justify">Lets have a closer look at the target variable 'y'. The target variable represents the time (in seconds) spent by a given car sample on bench. The average bench time is around 100 s, the minimum and maximum bench time is around 72 s and 265 s respectively. The meadian and mean value for bench time have a difference of about 1 s which could be due to a few outliers in the higher side that are pulling the mean higher, but the difference is not very significant. However the difference between the 75th percentile and the 100th percentile is significant and needs a closer look.</p>  
+<p align="center"><a href="https://imgur.com/JzqEzp4"><img src="https://i.imgur.com/JzqEzp4.png" title="source: imgur.com" /></a></p>
+<p align="justify">Lets have a look at the distribution of the target variable in the training data.</p>
+<p align="center"><a href="https://imgur.com/M61CO3A"><img src="https://i.imgur.com/M61CO3A.png" title="source: imgur.com" /></a></p>
+<p align="justify">- The Distribution is left skewed and has a long tail on the right side, indicated by the high values for Skewness and Kurtosis. The PDF has a long tail on the right which means there are few samples that have extremely large test time. These samples could affect the model training. It can also be seen that there is a huge gap between 99th percentile and 100th percentile value, which also confirms the presence of few outliers in the data. Also peaks can be seen in the distribution at various values of 'y' which indicate multimodal distribution of test time. This is an indication of presence of gropus of similar configurations and features that result in similar test-time.</p>
+<p align="center"><a href="https://imgur.com/tDMvQHc"><img src="https://i.imgur.com/tDMvQHc.png" title="source: imgur.com" /></a></p>
+<p align="justify">This shows the long tail is mainly due to a single observation with very high bench time of 265 s.</p>
 

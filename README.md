@@ -77,3 +77,27 @@ Can you cut the time a Mercedes-Benz spends on the test bench?
 
 <p align="center"><a href="https://www.codecogs.com/eqnedit.php?latex=Kurtosis&space;=&space;\frac{1}{N}&space;\sum_{i}^N&space;[\frac{&space;(x_{i}&space;-&space;\bar{x})}{\sigma_{x}}]^4" target="_blank"><img src="https://latex.codecogs.com/gif.latex?Kurtosis&space;=&space;\frac{1}{N}&space;\sum_{i}^N&space;[\frac{&space;(x_{i}&space;-&space;\bar{x})}{\sigma_{x}}]^4" title="Kurtosis = \frac{1}{N} \sum_{i}^N [\frac{ (x_{i} - \bar{x})}{\sigma_{x}}]^4"></a></p>
 
+[Four moments of distribution: Mean, Variance, Skewness, and Kurtosis](http://learningeconometrics.blogspot.com/2016/09/four-moments-of-distribution-mean.html)
+
+- The Skewness for Normal Distribution is 0
+- The Kurtosis (Excess Kurtosis) for Normal Distribution is 0
+- We applied 3 different types of transforms to reduce the effect of outliers on the model
+- The first one was a simple **Square-root Transform** <a href="https://www.codecogs.com/eqnedit.php?latex=(\sqrt{y})" target="_blank"><img src="https://latex.codecogs.com/gif.latex?(\sqrt{y})" title="\sqrt{y}" /></a>
+    - This the simplest transform available to reduce the impact of outliers by scaling down the magnitude
+    - The reverse transform will be quiet simple as well i.e. <a href="https://www.codecogs.com/eqnedit.php?latex=(\sqrt{y})^2" target="_blank"><img src="https://latex.codecogs.com/gif.latex?(\sqrt{y})^2" title="((\sqrt{y})^2)" /></a>
+    - We see a drastic improvement in skewness and kurtosis, however the values are still not ideal
+    - **Skewness = 0.7277 | Kurtosis = 3.1711**
+    
+- The next transformation we applied was the **Log Transform** <a href="https://www.codecogs.com/eqnedit.php?latex=(\log{y})" target="_blank"><img src="https://latex.codecogs.com/gif.latex?(\log{y})" title="(\log{y})" /></a>
+    - This is also a monotonous transformation used to reduce the impact of outliers
+    - The reverse transform is also straight forward i.e. <a href="https://www.codecogs.com/eqnedit.php?latex=(\text{Antilog[}{\log{y}}\text{]})" target="_blank"><img src="https://latex.codecogs.com/gif.latex?(\text{Antilog[}{\log{y}}\text{]})" title="(\text{Antilog[}{\log{y}}\text{]})" /></a>
+    - The skewness and Kurtosis has also imporved drastically compared to the square-root transformation
+    - **Skewness = 0.39 | Kurtosis = 1.3095**
+    
+- The next transformation we applied was the **BoxCox Transform** <a href="https://www.codecogs.com/eqnedit.php?latex=(y=\frac{X^\lambda&space;-&space;1}{\lambda})" target="_blank"><img src="https://latex.codecogs.com/gif.latex?(y=\frac{X^\lambda&space;-&space;1}{\lambda})" title="(y=\frac{X^\lambda - 1}{\lambda})" /></a>
+    - The value of lambda is found such that it maximizes the Log-Likelihood function
+    - The reverse transform is <a href="https://www.codecogs.com/eqnedit.php?latex=(X&space;=&space;(y&space;*&space;\lambda&space;&plus;&space;1)^\frac{1}{\lambda})" target="_blank"><img src="https://latex.codecogs.com/gif.latex?(X&space;=&space;(y&space;*&space;\lambda&space;&plus;&space;1)^\frac{1}{\lambda})" title="(X = (y * \lambda + 1)^\frac{1}{\lambda})"/></a>
+    - **Skewness = -0.0155 | Kurtosis = 0.4019**
+ 
+<p align="center"><a href="https://imgur.com/nHw5JSm"><img src="https://i.imgur.com/nHw5JSm.png" title="source: imgur.com" /></a>
+<a href="https://imgur.com/q4o5Q7i"><img src="https://i.imgur.com/q4o5Q7i.png" title="source: imgur.com" /></a></p>

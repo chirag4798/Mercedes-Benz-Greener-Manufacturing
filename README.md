@@ -288,3 +288,261 @@ The optimum number of features selected was 3, **X0, X265 and X47** with the cor
 ## EDA Conclusion 
 <p align="justify">The Dataset contains 7 Categorical Features, 356 Binary Features, 1 Continuous Feature and 1 continuous Target variable The Dataset has no missing or Nan values The distribution of y showed a heavily tailed one, presence of outliers was suspected. A log transform has been applied to the target variable to correct the skewness and the tailedness in its distribution. Recursive feature Elimination, resulted in 3 important features -> X0, X265 and X47. Other forms of visualization the Binary features do not have very good variance as a whole but few of them could be useful and important features like X127 and X314. Feature X0 is the most important feature in the task, it is highly correlated with the target variable The X0 categories can roughly be binned into these ranges, if we ignore the per category outlier samples.</p>
 <a href="https://imgur.com/8LG6JJb"><img src="https://i.imgur.com/8LG6JJb.png" title="source: imgur.com" /></a>
+
+## Dimensionality Reduction
+- There are a lot of features in the dataset, however many features don't have any influence over the target variable.
+- Its difficult to know of all the interactions possible between the features that would have an impact on the target variable.
+- One way to overcome this problem is to apply dimensionality reduction techniques to the features.
+- Dimensionality reduction is different from Feature selection, since the reduced dimensions are a combination of different existing features instead of being a single feature.
+- Differernt methods of Dimensionality Reduction used in this case study:  
+    - **Principal Component Analysis (PCA):** Aims to find the directions of maximum variance in high-dimensional data and projects it onto a new subspace with equal or fewer dimensions than the original one.  
+    - **Independent Component Analysis (ICA):** is a computational method for separating a multivariate signal into additive subcomponents. This is done by assuming that the subcomponents are non-Gaussian signals and that they are statistically independent from each other.   
+    - **Truncated Singular Value Decomposition (TSVD):** This transformer performs linear dimensionality reduction by means of truncated singular value decomposition (SVD). Contrary to PCA, this estimator does not center the data before computing the singular value decomposition. This means it can work with sparse matrices efficiently.    
+    - **Gaussian Random Projection (GRP):** In random projection, the original d-dimensional data is projected to a k-dimensional (k << d) subspace, using a random *(k x dk x k)*- dimensional matrix R whose columns have unit lengths. Using matrix notation: If X is the original set of N, d-dimensional observations, then X' = R * X is the projection of the data onto a lower k-dimensional subspace. Random projection is computationally simple: form the random matrix "R" and project the *(d x Nd x N)*  data matrix X onto K dimensions of order *(O(dkN))*. If the data matrix X is sparse with about c nonzero entries per column, then the complexity of this operation is of order *(O(ckN))*. In Gaussian random projection, the random matrix R can be generated using a Gaussian distribution.  
+    - **Sparse Random Projection (SRP):** Sparse random matrix is an alternative to dense random projection matrix that guarantees similar embedding quality while being much more memory efficient and allowing faster computation of the projected data.
+    
+```python
+import pandas as pd
+import numpy as np
+import category_encoders as ce
+from sklearn.random_projection import GaussianRandomProjection, SparseRandomProjection
+from sklearn.decomposition import PCA, FastICA, TruncatedSVD
+
+train = pd.read_csv('train.csv')
+train = train.groupby(categorical_columns+binary_columns).mean().reset_index()
+if ("X314 + X315" not in train.columns):
+    train["X314 + X315"] = train["X314"] + train["X315"]
+    binary_columns.append("X314 + X315")
+X = train[categorical_columns + binary_columns]
+y = train['y'].values
+
+target_encoder = ce.target_encoder.TargetEncoder(cols=categorical_columns + binary_columns)
+target_encoder.fit(X, y)
+
+X = target_encoder.transform(X)
+
+scaler = StandardScaler()
+scaler.fit(X)
+
+X = pd.DataFrame(scaler.transform(X), columns=categorical_columns + binary_columns)
+
+n_comp = len(categorical_columns + binary_columns) - 1
+
+# PCA
+pca = PCA(n_components=n_comp, random_state=420)
+pca_train = pca.fit_transform(X)
+
+# ICA
+ica = FastICA(n_components=n_comp, random_state=420)
+ica_train = ica.fit_transform(X)
+
+# tSVD
+tsvd = TruncatedSVD(n_components=n_comp, random_state=420)
+tsvd_train = tsvd.fit_transform(X)
+
+# GRP
+grp = GaussianRandomProjection(n_components=n_comp, eps=0.1, random_state=420)
+grp_train = grp.fit_transform(X)
+
+# SRP
+srp = SparseRandomProjection(n_components=n_comp, dense_output=True, random_state=420)
+srp_train = srp.fit_transform(X)
+```
+
+Next, we'll determine the optimum number of componenets to include with the help of 10-Fold Cross Validation. The n_comp value of 13 was revealed to have the highest R2 Score in the cross Validation.
+<p align="center"><a href="https://imgur.com/AV31aXU"><img src="https://i.imgur.com/AV31aXU.png" title="source: imgur.com"/></a></p>
+
+```python
+n_comp = 13
+# Append decomposition components to datasets
+for i in range(1, n_comp + 1):
+    X['pca_' + str(i)]  = pca_train[:, i - 1]
+    X['ica_' + str(i)]  = ica_train[:, i - 1]
+    X['tsvd_' + str(i)] = tsvd_train[:, i - 1]
+    X['grp_' + str(i)]  = grp_train[:, i - 1]
+    X['srp_' + str(i)]  = srp_train[:, i - 1]
+
+final_features = list(X.columns)
+X = X.values
+```
+
+## Regression Models
+**Linear Regression**
+<p align="justify">Now its time we apply some models to the data and evaluate the models. The idea is to start with simple models and try and get the best performance out of it before moving to more complex models. We'll use Cross Validation to get the best hyper-parameters. We'll start with the most well known regression model, Linear Regression.</p>
+
+```python
+from sklearn.linear_model import SGDRegressor
+sgd = SGDRegressor(tol=1e-5, max_iter=100, random_state=100)
+
+# define search space
+space = dict()
+space['loss']     = ['squared_loss', 'huber']
+space['penalty']  = ['l1', 'l2', 'elasticnet']
+space['l1_ratio'] = [x/10 for x in range(1, 11)]
+space['alpha']    = [10**x for x in range(-5, 3)]
+
+# define search
+sgd = GridSearchCV(sgd, space, scoring=R2_score, cv=5, n_jobs=-1, verbose=1)
+
+# execute search
+result = sgd.fit(X, np.log(y))
+
+# summarize result
+sgd_params = result.best_params_
+
+y_pred = np.exp(sgd.predict(X))
+sgd_score = r2_score(y, y_pred)
+```
+The following plots show the feature importance score calculated by SGDRegressor and the plot of "ID" vs "y".  
+<p align="center"><a href="https://imgur.com/ncp1ie0"><img src="https://i.imgur.com/ncp1ie0.png" title="source: imgur.com" /></a></p>
+The Kaggle score for Linear Regression.  
+<p align="center"><a href="https://imgur.com/d5Sapgw"><img src="https://i.imgur.com/d5Sapgw.png" title="source: imgur.com" /></a></p>
+
+**XGB Regression**
+<p align="justify">Next we'll try some tree based model, the most popular one being XGBoost.</p>
+
+```python
+from xgboost import XGBRegressor
+
+xgb = XGBRegressor(tol=1e-5, base_score=np.mean(np.log(y)), random_state=21)
+
+# define search space
+space = dict()
+space['n_estimators']     = [x*100 for x in range(1, 20)]
+space['max_depth']        = [x for x in range(1, 10)] 
+space['objective']        = ['reg:squarederror', PseudoHuberLoss]
+space['learning_rate']    = loguniform(1e-5, 1)
+space['gamma']            = loguniform(1e-5, 1)
+space['reg_alpha']        = loguniform(1e-5, 100)
+space['reg_lambda']       = loguniform(1e-5, 100)
+space['colsample_bytree'] = uniform(0, 1)
+space['subsample']        = uniform(0, 1)
+
+
+# define search
+xgb = RandomizedSearchCV(xgb, space, scoring=R2_score, cv=2, n_jobs=-1, verbose=1, n_iter=200, random_state=21)
+
+# execute search
+result = xgb.fit(X, np.log(y))
+
+# summarize result
+xgb_params = result.best_params_
+
+y_pred = np.exp(xgb.predict(X))
+xgb_score = r2_score(y, y_pred)
+```
+The following plots show the feature importance score calculated by XGBRegressor and the plot of "ID" vs "y".
+<p align="center"><a href="https://imgur.com/VgLvx2y"><img src="https://i.imgur.com/VgLvx2y.png" title="source: imgur.com" /></a></p>
+The Kaggle score for XGB Regression.
+<p align="center"><a href="https://imgur.com/Xt71rW9"><img src="https://i.imgur.com/Xt71rW9.png" title="source: imgur.com" /></a></p>
+
+**Gradient Boosted Regression**
+<p align="justify">Next up is the most popular Gradient Boosting Model from scikit-learn, Gradient boosting Regressor.</p>
+
+```python
+from sklearn.ensemble import GradientBoostingRegressor
+
+gbr = GradientBoostingRegressor(tol=1e-5,  min_samples_leaf=18, min_samples_split=14, random_state=21)
+
+# define search space
+space = dict()
+space['loss']          = ['ls', 'lad', 'huber', 'quantile']
+space['learning_rate'] = loguniform(1e-5, 1)
+space['max_depth']     = [x for x in range(1, 10)] 
+space['subsample']     = uniform(0, 1)
+space['criterion']     = ['mse', 'mae', "friedman_mse"]
+space['n_estimators']  = [x*100 for x in range(2, 11)]
+space['max_samples']   = uniform(0,1)
+space['ccp_alpha']     = uniform(0,1)
+# define search
+gbr = RandomizedSearchCV(gbr, space, scoring=R2_score, cv=2, n_iter=40, n_jobs=-1, verbose=1, random_state=21)
+
+# execute search
+result = gbr.fit(X, np.log(y))
+
+# summarize result
+gbr_params = result.best_params_
+
+y_pred = np.exp(gbr.predict(X))
+gbr_score = r2_score(y, y_pred)
+```
+The following plots show the feature importance score calculated by Gradient Boosting Regressor and the plot of "ID" vs "y".
+<p align="center"><a href="https://imgur.com/YVlQlEE"><img src="https://i.imgur.com/YVlQlEE.png" title="source: imgur.com" /></a></p>
+The Kaggle score for Gradient Boosting Regression.
+<p align="center"><a href="https://imgur.com/XE2WJga"><img src="https://i.imgur.com/XE2WJga.png" title="source: imgur.com" /></a></p>
+
+**Random Forest Regression**
+<p align="justify">Next up is the most popular Bagging Model from scikit-learn, Random Forest Regressor.</p>
+
+```python
+from sklearn.ensemble import RandomForestRegressor
+
+rfr = RandomForestRegressor(max_depth=None, criterion="mae", min_samples_leaf=18, min_samples_split=14, random_state=999)
+rfr.fit(X, np.log(y))
+
+y_pred = np.exp(rfr.predict(X))
+rfr_score = r2_score(y, y_pred)
+```
+The following plots show the feature importance score calculated by Random Forest Regressor and the plot of "ID" vs "y".
+<p align="center"><a href="https://imgur.com/1czSvji"><img src="https://i.imgur.com/1czSvji.png" title="source: imgur.com" /></a></p>
+The Kaggle score for Random Forest Regression.
+<p align="center"><a href="https://imgur.com/n1l8kaj"><img src="https://i.imgur.com/n1l8kaj.png" title="source: imgur.com" /></a></p>
+
+**Stacked Model**
+<p align="justify">Finally we'll use a stacked model by utilizing the best parameters from previous models and corss-validation results. We'll use the Ridge Regressor with 10 Fold Cross-Validation as our meta-model. The meta model will become</p>
+
+```python
+models = list()
+models.append(('xgb', XGBRegressor(tol=1e-7, importance_type="total_cover", base_score=np.mean(np.log(y)), random_state=999,**xgb.best_params_)))
+models.append(('gbr', GradientBoostingRegressor(tol=1e-7,  min_samples_leaf=120, min_samples_split=100, random_state=999, **gbr.best_params_)))
+models.append(('sgd', SGDRegressor(tol=1e-7, max_iter=100, random_state=100, **sgd.best_params_)))
+models.append(('rfr', RandomForestRegressor(max_depth=None, criterion="mae", min_samples_leaf=18, min_samples_split=14, random_state=999)))
+
+# define meta learner model
+meta_classifier = RidgeCV(cv=10, scoring=R2_score)
+
+# define the stacking ensemble
+model = StackingRegressor(estimators=models, final_estimator=meta_classifier, cv=10)
+
+# fit the model on all available data
+model.fit(X, np.log(y))
+
+# make a prediction for one example
+y_pred = np.exp(model.predict(X))
+```
+The following plots show the feature importance score for different models calculated by the meta-model and the plot of "ID" vs "y".
+<p align="center"><a href="https://imgur.com/uYVcTgj"><img src="https://i.imgur.com/uYVcTgj.png" title="source: imgur.com" /></a></p>
+The Kaggle score for Stacked Model.
+<p align="center"><a href="https://imgur.com/CMBiJFb"><img src="https://i.imgur.com/CMBiJFb.png" title="source: imgur.com" /></a></p>
+
+The stacked model could achieve a score similar to the 99th position on the Kaggle Private Leaderboard.
+<p align="center"><a href="https://imgur.com/SNZCf5w"><img src="https://i.imgur.com/SNZCf5w.png" title="source: imgur.com" /></a></p>
+
+## Model Comparision
+<p align="justify">The stacked model with Target Encoded Categorical Features along with the 13 componenets of various dimensionality reduction techniques like PCA, ICA, TSVD, SRP and GRP had the best performance.</p>
+<p align="center"><a href="https://imgur.com/YoBt4TN"><img src="https://i.imgur.com/YoBt4TN.png" title="source: imgur.com" /></a></p>
+
+## Future Work
+- We can use other methods of encoding the taret variable like Helmert Encoding, James-Stein Encoding, Count Encoding, M-estimate etc, these are all available on the category_encoder python library
+- We tried to get the best performance on this problem out of machine learning solutions, we can improve the performance using much bigger, deep learning based models.
+
+## References
+- [Applied AI Course's Machine Learning Course](https://www.appliedaicourse.com/course/11/Applied-Machine-learning-course)
+- [Mercedes Benz Greener Manufacturing, Kaggle](https://www.kaggle.com/c/mercedes-benz-greener-manufacturing)
+- [Mercedes Benz Greener Manufacturing - Kaggle - Winner's Solution](https://www.kaggle.com/c/mercedes-benz-greener-manufacturing/discussion/37700)
+- [Mercedes-Benz Greener Manufacturing - Runner Up's Solution](https://www.kaggle.com/c/mercedes-benz-greener-manufacturing/discussion/36390)
+- [Top Voted Public Kernel on Kaggle](https://www.kaggle.com/hakeem/stacked-then-averaged-models-0-5697?scriptVersionId=1252368)
+- [Will Koehrsen's Solution](https://williamkoehrsen.medium.com/capstone-project-mercedes-benz-greener-manufacturing-competition-4798153e2476)
+- [Aditya Pandey's Solution](https://medium.com/analytics-vidhya/mercedes-benz-greener-manufacturing-74a932ae0693)
+- [Top 3 Methods for Handling Skewed Data](https://towardsdatascience.com/top-3-methods-for-handling-skewed-data-1334e0debf45)
+- [Four moments of distribution: Mean, Variance, Skewness, and Kurtosis](http://learningeconometrics.blogspot.com/2016/09/four-moments-of-distribution-mean.html)
+- [Machine Learning Mastery](https://machinelearningmastery.com/)
+- [Recursive Feature Elimination (RFE) for Feature Selection in Python](https://machinelearningmastery.com/rfe-feature-selection-in-python/)  
+- [Pseudo Huber Loss](https://www.kaggle.com/c/mercedes-benz-greener-manufacturing/discussion/34826)
+- [Pseudo Huber Loss, sklearn implementation]( https://www.kaggle.com/c/mercedes-benz-greener-manufacturing/discussion/34826)
+- [Target Encoding vs One-Hot Encoding](https://medium.com/analytics-vidhya/target-encoding-vs-one-hot-encoding-with-simple-examples-276a7e7b3e64#:~:text=From%20the%20documentation%20linked%20above,over%20all%20the%20training%20data.%E2%80%9D)
+
+## Contact
+- [Github](https://github.com/chirag4798)
+- [Linkedin](https://www.linkedin.com/in/chirag-shetty-85250913a/)
+- [Website](https://chirag4798.github.io/)

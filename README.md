@@ -245,41 +245,19 @@ rfecv.fit(X, y)
 ```
 [Reference](https://www.kaggle.com/c/mercedes-benz-greener-manufacturing/discussion/34826)
 
-<p align="center">
-    <a href="https://imgur.com/GR1aCpZ">
-        <img src="https://i.imgur.com/GR1aCpZ.png" title="source: imgur.com" />
-    </a>
-</p>
+<p align="center"><a href="https://imgur.com/GR1aCpZ"><img src="https://i.imgur.com/GR1aCpZ.png" title="source: imgur.com" /></a></p>
 
 The optimum number of features selected was 3, **X0, X265 and X47** with the corresponding importance scores as shown in the plot below.
 - There were around 364 features to select from, the Recursive Feature Elimination through Cross Validation has resulted in selection of just 3 important features out of the 364 features. As seen previously from the correlation plot, the feature 'X0' has the most amount of interaction with the target variable 'y'. The Feature X0 has 47 uniques categories in the training data, a further look into these categories will help extract more information. The importance score for 'X0' is significantly higher than the score for feature 'X265' and 'X47'. Features X265 and X47 are Binary Features, Binary Features also need a closer look for extracting more information.
 
-<p align="center">
-    <a href="https://imgur.com/zHI8leu">
-        <img src="https://i.imgur.com/zHI8leu.png" title="source: imgur.com" />
-    </a>
-</p>
+<p align="center"><a href="https://imgur.com/zHI8leu"><img src="https://i.imgur.com/zHI8leu.png" title="source: imgur.com" /></a></p>
 
 ### Feature - X0
 <p align="justify">The categories aren't distributed uniformly for feature X0. Categories with high count have higher number of outliers.The Categories seem to be ordinal i.e. they seem to have some sort of inherent order in them. The categories from feature 'X0' have the most amount of interaction with the target 'y'When the categories are mean encoded, a monotonously increasing correlation can be seen between the categories of X0 and our target 'y'. The samples belonging to the categories of 'bc' and 'az' are responsible for the peaks at the lower end of the distribution for 'y'. The test time for categories 'bc' and 'az' belong to the lower end of the range for 'y' between 4.3 - 4.5. Whereas the test time for category 'aa' belongs to the higher end of the range for 'y' around 4.8 - 5.0Other categories are tightly bound in the range of 4.5 - 4.8 for log(y).</p>
 
-<p align="center">
-    <a href="https://imgur.com/c8LrRk9">
-        <img src="https://i.imgur.com/c8LrRk9.png" title="source: imgur.com"/>
-    </a>
-    <a href="https://imgur.com/HRX1wte">
-        <img src="https://i.imgur.com/HRX1wte.png" title="source: imgur.com"/>
-    </a>
-    <a href="https://imgur.com/5W6X3LE">
-        <img src="https://i.imgur.com/5W6X3LE.png" title="source: imgur.com"/>
-    </a>
-</p>
+<p align="center"><a href="https://imgur.com/c8LrRk9"><img src="https://i.imgur.com/c8LrRk9.png" title="source: imgur.com"/></a><a href="https://imgur.com/HRX1wte"><img src="https://i.imgur.com/HRX1wte.png" title="source: imgur.com"/></a><a href="https://imgur.com/5W6X3LE"><img src="https://i.imgur.com/5W6X3LE.png" title="source: imgur.com"/></a></p>
 
 ### Binary Features
 <p align="justify">There are around 356 Binary features in the datasetOn the left there is the mean test time for 1 and 0 labels respectively for each featureOn the right  there is the count for 1 and 0 labels respectively for each featureThe mean test time for each binary feature is close to the overal average test time, but the features which have very high or very low mean test time usually have highly unbalanced distribution for classes 0 and 1. Majority of the features have a mean close to 100 secFeatures X127 and X314 have quiet a bit of deviation from the overall avegrage with a balance in both 0 and 1 class.</p>
 
-<p align="center">
-    <a href="https://imgur.com/4ZC0OZk">
-        <img src="https://i.imgur.com/4ZC0OZk.png" title="source: imgur.com" />
-    </a>
-</p>
+<p align="center"><a href="https://imgur.com/UaRK9Yb"><img src="https://i.imgur.com/UaRK9Yb.png" title="source: imgur.com" /></a></p>

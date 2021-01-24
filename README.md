@@ -157,17 +157,23 @@ Dr. Json Brownlee, [Recursive Feature Elimination (RFE) for Feature Selection in
 - Huber Loss is a robust loss function used in regression that is less sensitive to outliers than Squared Loss.
 - The Huber loss is defined as
 
-<p align="center"><a href="https://www.codecogs.com/eqnedit.php?latex=\text{Huber&space;Loss}&space;=&space;\left\{\begin{array}{lr}&space;\frac{1}{2}(y&space;-&space;f(x))^2&space;&&space;\text{for&space;}&space;|y&space;-&space;f(x)|\leq&space;\delta,\\&space;\delta&space;(y&space;-&space;f(x))&space;-&space;\frac{1}{2}\delta^2&space;&&space;\text{otherwise&space;}\\&space;\end{array}\right\}" target="_blank"><img src="https://latex.codecogs.com/gif.latex?\text{Huber&space;Loss}&space;=&space;\left\{\begin{array}{lr}&space;\frac{1}{2}(y&space;-&space;f(x))^2&space;&&space;\text{for&space;}&space;|y&space;-&space;f(x)|\leq&space;\delta,\\&space;\delta&space;(y&space;-&space;f(x))&space;-&space;\frac{1}{2}\delta^2&space;&&space;\text{otherwise&space;}\\&space;\end{array}\right\}" title="\text{Huber Loss} = \left\{\begin{array}{lr} \frac{1}{2}(y - f(x))^2 & \text{for } |y - f(x)|\leq \delta,\\ \delta (y - f(x)) - \frac{1}{2}\delta^2 & \text{otherwise }\\ \end{array}\right\}" /></a></p>
+<p align="center">
+    <a href="https://www.codecogs.com/eqnedit.php?latex=\text{Huber&space;Loss}&space;=&space;\left\{\begin{array}{lr}&space;\frac{1}{2}(y&space;-&space;f(x))^2&space;&&space;\text{for&space;}&space;|y&space;-&space;f(x)|\leq&space;\delta,\\&space;\delta&space;(y&space;-&space;f(x))&space;-&space;\frac{1}{2}\delta^2&space;&&space;\text{otherwise&space;}\\&space;\end{array}\right\}" target="_blank"><img src="https://latex.codecogs.com/gif.latex?\text{Huber&space;Loss}&space;=&space;\left\{\begin{array}{lr}&space;\frac{1}{2}(y&space;-&space;f(x))^2&space;&&space;\text{for&space;}&space;|y&space;-&space;f(x)|\leq&space;\delta,\\&space;\delta&space;(y&space;-&space;f(x))&space;-&space;\frac{1}{2}\delta^2&space;&&space;\text{otherwise&space;}\\&space;\end{array}\right\}" title="\text{Huber Loss} = \left\{\begin{array}{lr} \frac{1}{2}(y - f(x))^2 & \text{for } |y - f(x)|\leq \delta,\\ \delta (y - f(x)) - \frac{1}{2}\delta^2 & \text{otherwise }\\ \end{array}\right\}" /></a>
+</p>
 
 - delta is a hyperparameter for this loss, it defines the region or the threshold inside which the loss is quadratic outside which the loss is linear.
 - However this function is discontinuous at delta and hence not differentiable at delta.
 - Instead a smooth approximation of it is used generally called as the Pseudo Huber Loss
 - Pseudo Huber Loss is defined as
 
-<p align="center"><a href="https://www.codecogs.com/eqnedit.php?latex=\text{Pseudo&space;Huber&space;Loss}&space;=&space;\delta&space;\sqrt{\delta^2&space;&plus;&space;(y&space;-&space;f(x))^2}&space;-&space;\delta^2" target="_blank"><img src="https://latex.codecogs.com/gif.latex?\text{Pseudo&space;Huber&space;Loss}&space;=&space;\delta&space;\sqrt{\delta^2&space;&plus;&space;(y&space;-&space;f(x))^2}&space;-&space;\delta^2" title="\text{Pseudo Huber Loss} = \delta \sqrt{\delta^2 + (y - f(x))^2} - \delta^2" /></a></p>
+<p align="center">
+    <a href="https://www.codecogs.com/eqnedit.php?latex=\text{Pseudo&space;Huber&space;Loss}&space;=&space;\delta&space;\sqrt{\delta^2&space;&plus;&space;(y&space;-&space;f(x))^2}&space;-&space;\delta^2" target="_blank"><img src="https://latex.codecogs.com/gif.latex?\text{Pseudo&space;Huber&space;Loss}&space;=&space;\delta&space;\sqrt{\delta^2&space;&plus;&space;(y&space;-&space;f(x))^2}&space;-&space;\delta^2" title="\text{Pseudo Huber Loss} = \delta \sqrt{\delta^2 + (y - f(x))^2} - \delta^2" /></a>
+</p>
 
 - The derivatives for Huber Loss
-<p align="center"><a href="https://www.codecogs.com/eqnedit.php?latex=\text{Gradient}&space;=&space;\frac{\delta&space;*&space;(y&space;-&space;f(x))}{(\delta^2&space;&plus;&space;(y&space;-&space;f(x))^2)^{1/2}}" target="_blank"><img src="https://latex.codecogs.com/gif.latex?\text{Gradient}&space;=&space;\frac{\delta&space;*&space;(y&space;-&space;f(x))}{(\delta^2&space;&plus;&space;(y&space;-&space;f(x))^2)^{1/2}}" title="\text{Gradient} = \frac{\delta * (y - f(x))}{(\delta^2 + (y - f(x))^2)^{1/2}}" /></a></p>
+<p align="center">
+    <a href="https://www.codecogs.com/eqnedit.php?latex=\text{Gradient}&space;=&space;\frac{\delta&space;*&space;(y&space;-&space;f(x))}{(\delta^2&space;&plus;&space;(y&space;-&space;f(x))^2)^{1/2}}" target="_blank"><img src="https://latex.codecogs.com/gif.latex?\text{Gradient}&space;=&space;\frac{\delta&space;*&space;(y&space;-&space;f(x))}{(\delta^2&space;&plus;&space;(y&space;-&space;f(x))^2)^{1/2}}" title="\text{Gradient} = \frac{\delta * (y - f(x))}{(\delta^2 + (y - f(x))^2)^{1/2}}" /></a>
+</p>
 
 [Reference](https://socratic.org/questions/how-do-you-differentiate-y-sqrt-1-x-2)
 
@@ -237,8 +243,21 @@ rfecv.fit(X, y)
 ```
 [Reference](https://www.kaggle.com/c/mercedes-benz-greener-manufacturing/discussion/34826)
 
-<p align="center"><a href="https://imgur.com/GR1aCpZ"><img src="https://i.imgur.com/GR1aCpZ.png" title="source: imgur.com" /></a></p>
+<p align="center">
+    <a href="https://imgur.com/GR1aCpZ"><img src="https://i.imgur.com/GR1aCpZ.png" title="source: imgur.com" /></a>
+</p>
 
 The optimum number of features selected was 3, **X0, X265 and X47** with the corresponding importance scores as shown in the plot below.
+- There were around 364 features to select from, the Recursive Feature Elimination through Cross Validation has resulted in selection of just 3 important features out of the 364 features. As seen previously from the correlation plot, the feature 'X0' has the most amount of interaction with the target variable 'y'. The Feature X0 has 47 uniques categories in the training data, a further look into these categories will help extract more information. The importance score for 'X0' is significantly higher than the score for feature 'X265' and 'X47'. Features X265 and X47 are Binary Features, Binary Features also need a closer look for extracting more information.
 
-<p align="center"><a href="https://imgur.com/zHI8leu"><img src="https://i.imgur.com/zHI8leu.png" title="source: imgur.com" /></a></p>
+<p align="center">
+    <a href="https://imgur.com/zHI8leu"><img src="https://i.imgur.com/zHI8leu.png" title="source: imgur.com" /></a>
+</p>
+
+## Feature - X0
+
+<p align="center">
+    <a href="https://imgur.com/c8LrRk9"><img src="https://i.imgur.com/c8LrRk9.png" title="source: imgur.com" /></a>
+    <a href="https://imgur.com/HRX1wte"><img src="https://i.imgur.com/HRX1wte.png" title="source: imgur.com" /></a>
+    <a href="https://imgur.com/5W6X3LE"><img src="https://i.imgur.com/5W6X3LE.png" title="source: imgur.com" /></a>
+</p>

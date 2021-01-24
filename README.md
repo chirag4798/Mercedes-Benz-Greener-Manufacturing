@@ -101,3 +101,144 @@ Can you cut the time a Mercedes-Benz spends on the test bench?
  
 <p align="center"><a href="https://imgur.com/nHw5JSm"><img src="https://i.imgur.com/nHw5JSm.png" title="source: imgur.com" /></a>
 <a href="https://imgur.com/q4o5Q7i"><img src="https://i.imgur.com/q4o5Q7i.png" title="source: imgur.com" /></a></p>
+
+<p align="justify">We're only considering columns which have atleast 2 states i.e. Binary features and categorical features. There were around 10-12 features with only one state throughout the train data, the test data may or may not contain the other states hence it is good to remove such columns. The only continuous variables present are 'ID' and the target variable 'y'. We'll be applying the log transform on the data to correct for skewness and kurtosis. The following features have zero variance in the training data and hence will be dropped.</p>
+
+**X11, X93, X107, X233, X235, X268, X289, X290, X293', X297, X330, X347**
+<p align="justify">The dataset contains samples which have the same value for the input variables like X0, X1, .. X385, but with different test time. This could be due to varius reasons, but it is hard to interpret those reasons due to the anonymous nature of the features. These samples could result in contradictory conclusions by our model and hence need to be corrected.The test time for the duplicates can be replaced by mean of all the duplicates, i.e taking the mean of test time for samples with duplicate inputs.</p>
+
+```python
+train = pd.read_csv("train.csv")
+
+categorical_columns = list()
+binary_columns      = list()
+drop_columns        = list()
+
+for col in train.columns:
+    if   2 < train[col].nunique() < 50:
+        categorical_columns.append(col)
+    elif train[col].nunique() == 2:
+        binary_columns.append(col)
+    elif train[col].nunique() == 1:
+        drop_columns.append(col)
+        
+train = train.groupby(categorical_columns + binary_columns).mean().reset_index()
+X = train[categorical_columns + binary_columns]
+y = train['y'].apply(lambda x: np.log(x))
+```
+## Target Encoding
+<p align="justify">Target encoding is when the categorical features are encoded with the mean of the target variable. This converts categorical columns to numeric and decreases the cardinality of the data.This helps the model as the categories are numeric, ordinal and hence more interpretable.</p>
+
+```python
+import category_encoders as ce
+target_encoder = ce.target_encoder.TargetEncoder(cols=categorical_columns)
+target_encoder.fit(X, y)
+
+X = target_encoder.transform(X)
+```
+
+<p align="justify">Lets have a look at the co-realtion between the categorical features and the target variable 'y'. The Pearson's co-relation coefficient is defined below. A Pearson Coefficient of 1 indicates perfect co-relation between variables whereas a coefficient of 0 indicates no co-relation between the variables X and Y.</p>
+<p align="center"><a href="https://www.codecogs.com/eqnedit.php?latex=\text{Pearson's&space;Correlation&space;Coefficient}&space;=&space;\frac{\sum_{i}^N&space;(x_{i}&space;-&space;\bar{x})(y_{i}&space;-&space;\bar{y})}{\sqrt{\sum_{i}^N&space;(x_{i}&space;-&space;\bar{x})^2&space;\sum_{i}^N&space;(y_{i}&space;-&space;\bar{y})^2}}&space;=&space;\frac{\text{Cov(X,Y)}}{\sigma_{x}&space;*&space;\sigma_{y}}" target="_blank"><img src="https://latex.codecogs.com/gif.latex?\text{Pearson's&space;Correlation&space;Coefficient}&space;=&space;\frac{\sum_{i}^N&space;(x_{i}&space;-&space;\bar{x})(y_{i}&space;-&space;\bar{y})}{\sqrt{\sum_{i}^N&space;(x_{i}&space;-&space;\bar{x})^2&space;\sum_{i}^N&space;(y_{i}&space;-&space;\bar{y})^2}}&space;=&space;\frac{\text{Cov(X,Y)}}{\sigma_{x}&space;*&space;\sigma_{y}}" title="\text{Pearson's Correlation Coefficient} = \frac{\sum_{i}^N (x_{i} - \bar{x})(y_{i} - \bar{y})}{\sqrt{\sum_{i}^N (x_{i} - \bar{x})^2 \sum_{i}^N (y_{i} - \bar{y})^2}} = \frac{\text{Cov(X,Y)}}{\sigma_{x} * \sigma_{y}}" /></a></p>
+<p align="center"><a href="https://imgur.com/Rc2KEa3"><img src="https://i.imgur.com/Rc2KEa3.png" title="source: imgur.com" /></a></p>
+
+<p align="justify">The figure shows the correlation coefficient between the Mean Encoded Categorical Features with the Target Variable 'y'. The feature X0 has the highest correlation with 'y' with a Person's Coefficient of 0.8, followed by the feature X2.</p>
+
+## Recursive Feature Selection
+
+<p align="justify">We'll use Recursive Feature Elimination to extract important features from the dataset in order to understand it better since we can't look at all the 350+ features. According to Dr. Json Brownlee from Machine Learning Mastery, RFE can be best described as,</p>
+
+>Recursive Feature Elimination (RFE) is a wrapper-type feature selection algorithm. This means that a different machine learning algorithm is given and used in the core of the method, is wrapped by RFE, and used to help select features. This is in contrast to filter-based feature selections that score each feature and select those features with the largest (or smallest) score. Technically, RFE is a wrapper-style feature selection algorithm that also uses filter-based feature selection internally. RFE works by searching for a subset of features by starting with all features in the training dataset and successfully removing features until the desired number remains. This is achieved by fitting the given machine learning algorithm used in the core of the model, ranking features by importance, discarding the least important features, and re-fitting the model. This process is repeated until a specified number of features remains.
+
+Dr. Json Brownlee, [Recursive Feature Elimination (RFE) for Feature Selection in Python](https://machinelearningmastery.com/rfe-feature-selection-in-python/) & [Machine Learning Mastery](https://machinelearningmastery.com/) 
+- We'll use XGBoost regressor as the model for RFE
+
+[**Pseudo Huber Loss**](https://www.kaggle.com/c/mercedes-benz-greener-manufacturing/discussion/34826)
+- Due to the presence of outliers in the data, it would be better to use a more robust loss function in the Recursive Feature Elimination process performed using the XGBoost Regressor Model
+- Huber Loss is a robust loss function used in regression that is less sensitive to outliers than Squared Loss.
+- The Huber loss is defined as
+
+<p align="center"><a href="https://www.codecogs.com/eqnedit.php?latex=\text{Huber&space;Loss}&space;=&space;\left\{\begin{array}{lr}&space;\frac{1}{2}(y&space;-&space;f(x))^2&space;&&space;\text{for&space;}&space;|y&space;-&space;f(x)|\leq&space;\delta,\\&space;\delta&space;(y&space;-&space;f(x))&space;-&space;\frac{1}{2}\delta^2&space;&&space;\text{otherwise&space;}\\&space;\end{array}\right\}" target="_blank"><img src="https://latex.codecogs.com/gif.latex?\text{Huber&space;Loss}&space;=&space;\left\{\begin{array}{lr}&space;\frac{1}{2}(y&space;-&space;f(x))^2&space;&&space;\text{for&space;}&space;|y&space;-&space;f(x)|\leq&space;\delta,\\&space;\delta&space;(y&space;-&space;f(x))&space;-&space;\frac{1}{2}\delta^2&space;&&space;\text{otherwise&space;}\\&space;\end{array}\right\}" title="\text{Huber Loss} = \left\{\begin{array}{lr} \frac{1}{2}(y - f(x))^2 & \text{for } |y - f(x)|\leq \delta,\\ \delta (y - f(x)) - \frac{1}{2}\delta^2 & \text{otherwise }\\ \end{array}\right\}" /></a></p>
+
+- delta is a hyperparameter for this loss, it defines the region or the threshold inside which the loss is quadratic outside which the loss is linear.
+- However this function is discontinuous at delta and hence not differentiable at delta.
+- Instead a smooth approximation of it is used generally called as the Pseudo Huber Loss
+- Pseudo Huber Loss is defined as
+
+<p align="center"><a href="https://www.codecogs.com/eqnedit.php?latex=\text{Pseudo&space;Huber&space;Loss}&space;=&space;\delta&space;\sqrt{\delta^2&space;&plus;&space;(y&space;-&space;f(x))^2}&space;-&space;\delta^2" target="_blank"><img src="https://latex.codecogs.com/gif.latex?\text{Pseudo&space;Huber&space;Loss}&space;=&space;\delta&space;\sqrt{\delta^2&space;&plus;&space;(y&space;-&space;f(x))^2}&space;-&space;\delta^2" title="\text{Pseudo Huber Loss} = \delta \sqrt{\delta^2 + (y - f(x))^2} - \delta^2" /></a></p>
+
+- The derivatives for Huber Loss
+<p align="center"><a href="https://www.codecogs.com/eqnedit.php?latex=\text{Gradient}&space;=&space;\frac{\delta&space;*&space;(y&space;-&space;f(x))}{(\delta^2&space;&plus;&space;(y&space;-&space;f(x))^2)^{1/2}}" target="_blank"><img src="https://latex.codecogs.com/gif.latex?\text{Gradient}&space;=&space;\frac{\delta&space;*&space;(y&space;-&space;f(x))}{(\delta^2&space;&plus;&space;(y&space;-&space;f(x))^2)^{1/2}}" title="\text{Gradient} = \frac{\delta * (y - f(x))}{(\delta^2 + (y - f(x))^2)^{1/2}}" /></a></p>
+
+[Reference](https://socratic.org/questions/how-do-you-differentiate-y-sqrt-1-x-2)
+
+<p align="center"><a href="https://www.codecogs.com/eqnedit.php?latex=\text{Hessian}&space;=&space;\frac{\delta^3}{(\delta^2&space;&plus;&space;(y&space;-&space;f(x))^2)^{3/2}}" target="_blank"><img src="https://latex.codecogs.com/gif.latex?\text{Hessian}&space;=&space;\frac{\delta^3}{(\delta^2&space;&plus;&space;(y&space;-&space;f(x))^2)^{3/2}}" title="\text{Hessian} = \frac{\delta^3}{(\delta^2 + (y - f(x))^2)^{3/2}}" /></a></p>
+
+[Reference](https://socratic.org/questions/how-do-you-find-the-derivative-of-x-sqrt-x-2-1)
+
+**Note:** The optimizer for XGBoost Regressor doesn't actually require the Loss, only the gradients for calculating the updates.
+
+```python
+import numpy as np
+from sklearn.metrics import r2_score, make_scorer
+from sklearn.feature_selection import RFECV
+from xgboost import XGBRegressor
+
+def gradient(diff: np.ndarray, delta: int = 1) -> np.ndarray:
+    '''
+    Gradient for the Pseudo Huber Loss
+    Args:
+        diff  : Vector consisting of difference between Ground Truth of Target and the Predicted Target
+        delta : Hyperparameter for the PseudoHuber Loss function. 
+                The threshold within which the loss is quadratic in nature,
+                outside the thresold the loss is linear
+    Returns:
+        g     : Gradients for the PsedoHuber Loss
+    '''
+    g      = delta*diff*(np.power((delta**2 + diff**2),-1/2))
+    return g
+
+def hessian(diff: np.ndarray, delta: int =1) -> np.ndarray:
+    '''
+    Hessian for the Pseudo Huber Loss
+    Args:
+        diff  : Vector consisting of difference between Ground Truth of Target and the Predicted Target
+        delta : Hyperparameter for the PseudoHuber Loss function. 
+                The threshold within which the loss is quadratic in nature,
+                outside the thresold the loss is linear
+    Returns:
+        h     : Hessian for the PsedoHuber Loss
+    '''
+    h      = delta**3*(np.power((delta**2 + diff**2),-3/2))
+    return h
+
+def PseudoHuberLoss(y_true: np.ndarray , y_pred: np.ndarray, delta: int = 1) -> (np.ndarray, np.ndarray):
+    '''
+    Gradient & Hessian for the Pseudo Huber Loss
+    Args:
+        y_true: Ground truth for target
+        y_pred: Predicted target
+        delta : Hyperparameter for the PseudoHuber Loss function. 
+                The threshold within which the loss is quadratic in nature,
+                outside the thresold the loss is linear
+    Returns:
+        g     : Gradients for the PsedoHuber Loss
+        h     : Hessian for the PsedoHuber Loss
+    '''
+    y_pred = y_pred.ravel()
+    diff   = y_pred - y_true
+    g      = gradient(diff, delta=delta)
+    h      = hessian(diff, delta=delta)
+    return g, h
+
+R2_score = make_scorer(r2_score, greater_is_better=True)
+est = XGBRegressor(max_depth=3, n_estimators=1000, base_score=y.mean(), objective=PseudoHuberLoss, seed=100, random_state=0)
+rfecv = RFECV(estimator=est, step=1, cv=2, verbose=0, n_jobs=2, scoring=R2_score)
+rfecv.fit(X, y)
+```
+[Reference](https://www.kaggle.com/c/mercedes-benz-greener-manufacturing/discussion/34826)
+
+<p align="center"><a href="https://imgur.com/GR1aCpZ"><img src="https://i.imgur.com/GR1aCpZ.png" title="source: imgur.com" /></a></p>
+
+The optimum number of features selected was 3, **X0, X265 and X47** with the corresponding importance scores as shown in the plot below.
+
+<p align="center"><a href="https://imgur.com/zHI8leu"><img src="https://i.imgur.com/zHI8leu.png" title="source: imgur.com" /></a></p>

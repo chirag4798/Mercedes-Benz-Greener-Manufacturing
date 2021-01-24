@@ -261,3 +261,30 @@ The optimum number of features selected was 3, **X0, X265 and X47** with the cor
 <p align="justify">There are around 356 Binary features in the datasetOn the left there is the mean test time for 1 and 0 labels respectively for each featureOn the right  there is the count for 1 and 0 labels respectively for each featureThe mean test time for each binary feature is close to the overal average test time, but the features which have very high or very low mean test time usually have highly unbalanced distribution for classes 0 and 1. Majority of the features have a mean close to 100 secFeatures X127 and X314 have quiet a bit of deviation from the overall avegrage with a balance in both 0 and 1 class.</p>
 
 <p align="center"><a href="https://imgur.com/UaRK9Yb"><img src="https://i.imgur.com/UaRK9Yb.png" title="source: imgur.com" /></a></p>
+
+<p align="justify">The plots below shows distribution for Binary features with respect to the target variable "y". Features X47 and X265 have multiple peaks in the distribution.When X47 = 1, the test time is greater than the mean test time. This feature is a good indicator for samples with test time in the upper range of the data.The two peaks in the distribution indicate a bimodal distribution for feature X265. The multimodal nature of the plots indicate groups of similar features or configurations that result in similar test time. The peaks for features X127 and X314 are much more clearly seperable by the mean line.These features will be a good for seperating the bimodal distribution of the test time.</p>
+
+<p align="center"><a href="https://imgur.com/iN0xlFn"><img src="https://i.imgur.com/iN0xlFn.png" title="source: imgur.com" /></a>
+<a href="https://imgur.com/rQ8Z1fu"><img src="https://i.imgur.com/rQ8Z1fu.png" title="source: imgur.com" /></a></p>
+
+### Bi-variate Analysis
+**X47, X127, X265, X314**
+<p align="justify"> The distribution plots for feature interaction between various selected features. The seperation between the peaks of the distribution allows for interesting feature interactions. When X47 = 0, the value for feature X127 has a correlation to the test time, i.e if X127 = 0, the test time is generally higher than the mean, whereas if X127 = 1, the test time is generally lower than the mean test time 'y'. A similar trend is observed when X47 = 1, however the test time for both X127 = 0 & X127 = 1 are generally higher than the mean test time 'y'. Similarly for feature X314 = 0, the value for feature X47 has a correlation to the test time, i.e if X47 = 0, the test time is generally lower than the mean, whereas if X47 = 1, the test time is generally higher than the mean. Similarly for feature X265 = 0, the value for feature X47 has a correlation to the test time, i.e if X314 = 0, the test time is generally lower than the mean, whereas if X314 = 1, the test time is generally higher than the mean. For feature X265 the difference between the two distributions is a lot more pronounced. Even when X265 = 1, the same trend is observed.</p>
+
+<p align="center">
+    <a href="https://imgur.com/Fp5Flt7"><img src="https://i.imgur.com/Fp5Flt7.png" title="source: imgur.com" /></a>
+    <a href="https://imgur.com/qEVz3T7"><img src="https://i.imgur.com/qEVz3T7.png" title="source: imgur.com" /></a>
+    <a href="https://imgur.com/vQaBTif"><img src="https://i.imgur.com/vQaBTif.png" title="source: imgur.com" /></a>
+</p>
+
+**X0, X127**
+<p align="justify">The most interesting feature interaction is between the Features X0 and X127. The feature X127 creates two seperate groups of configurations for the categories in X0 The seperation can be clearly seen in the plot above. The categories 'ab', 'ac', and 'g' have been merged together since they have the same exact mean. This could carry some inherent meaning about the type of test or the combination of configurations in the testing used. Also it would allow us to bin certain categories to ceratin ranges, this could help in reducing the cardinality of the data. However we could loose information while binning, hence Mean Encoding would be a better approach to reduce cardinality of the data.</p>
+<p align="center"><a href="https://imgur.com/vu9Hl7d"><img src="https://i.imgur.com/vu9Hl7d.png" title="source: imgur.com" /></a></p>
+
+**X314 + X315, X127**
+<p align="justify">The combination or rather the sum of features X314 & X315 have a similar interaction with feature X127, however the seperations are even more pronounced in this case as seen below.</p>
+<p align="center"><a href="https://imgur.com/te0j3Pc"><img src="https://i.imgur.com/te0j3Pc.png" title="source: imgur.com" /></a></p>
+
+## EDA Conclusion 
+<p align="justify">The Dataset contains 7 Categorical Features, 356 Binary Features, 1 Continuous Feature and 1 continuous Target variable The Dataset has no missing or Nan values The distribution of y showed a heavily tailed one, presence of outliers was suspected. A log transform has been applied to the target variable to correct the skewness and the tailedness in its distribution. Recursive feature Elimination, resulted in 3 important features -> X0, X265 and X47. Other forms of visualization the Binary features do not have very good variance as a whole but few of them could be useful and important features like X127 and X314. Feature X0 is the most important feature in the task, it is highly correlated with the target variable The X0 categories can roughly be binned into these ranges, if we ignore the per category outlier samples.</p>
+<a href="https://imgur.com/8LG6JJb"><img src="https://i.imgur.com/8LG6JJb.png" title="source: imgur.com" /></a>

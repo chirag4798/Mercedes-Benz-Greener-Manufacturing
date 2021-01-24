@@ -247,8 +247,7 @@ rfecv.fit(X, y)
 
 <p align="center"><a href="https://imgur.com/GR1aCpZ"><img src="https://i.imgur.com/GR1aCpZ.png" title="source: imgur.com" /></a></p>
 
-The optimum number of features selected was 3, **X0, X265 and X47** with the corresponding importance scores as shown in the plot below.
-- There were around 364 features to select from, the Recursive Feature Elimination through Cross Validation has resulted in selection of just 3 important features out of the 364 features. As seen previously from the correlation plot, the feature 'X0' has the most amount of interaction with the target variable 'y'. The Feature X0 has 47 uniques categories in the training data, a further look into these categories will help extract more information. The importance score for 'X0' is significantly higher than the score for feature 'X265' and 'X47'. Features X265 and X47 are Binary Features, Binary Features also need a closer look for extracting more information.
+<p align="justify">The optimum number of features selected was 3, **X0, X265 and X47** with the corresponding importance scores as shown in the plot below. There were around 364 features to select from, the Recursive Feature Elimination through Cross Validation has resulted in selection of just 3 important features out of the 364 features. As seen previously from the correlation plot, the feature 'X0' has the most amount of interaction with the target variable 'y'. The Feature X0 has 47 uniques categories in the training data, a further look into these categories will help extract more information. The importance score for 'X0' is significantly higher than the score for feature 'X265' and 'X47'. Features X265 and X47 are Binary Features, Binary Features also need a closer look for extracting more information.</p>
 
 <p align="center"><a href="https://imgur.com/zHI8leu"><img src="https://i.imgur.com/zHI8leu.png" title="source: imgur.com" /></a></p>
 
